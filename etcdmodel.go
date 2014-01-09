@@ -6,14 +6,24 @@ package gatemanagementclient
 
 /***********************************************************************************
  * a simple type used to unmarshal JSON responses back from the etcd server giving
- * context to how the etcd server responded to the specific request
+ * context to how the etcd server encountered a problem processing a request
  **********************************************************************************/
-type EtcdMessage struct {
+type EtcdErrorMessage struct {
 	ErrorCode int32
 	Message string
 	Cause string
 	Index int32
 }
 
-// TODO: EtcdConfigAction to encapsulate responses from valid actions that took place
-// like creating keys, retrieving keys, deleting keys, updating keys, etc(d) :)
+/***********************************************************************************
+ * a simple type used to unmarshal JSON responses back from the etcd server giving
+ * context to how the etcd server handled an action processing request
+ **********************************************************************************/
+type EtcdActionMessage struct {
+	Action string
+	Key string
+	Value string
+	NewKey bool
+	PrevValue string
+	Index int32
+}
