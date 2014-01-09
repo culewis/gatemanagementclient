@@ -14,3 +14,5 @@ note you might need to adjust the limit on open files for an executable running 
 	http: Accept error: accept tcp[::]:<etcd port>: too many open files; retrying in <number here>ms
 this can be mitigated by increasing the number of concurrent "files" open by a process by observing the following article:
 	http://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1
+
+looks like the pain point identified was processing 1024 messages over a given amount of threads; upping threads from 4 to 32 seemed to ease the pain but eventually (after many successive runs) i would see errors indicating the tcp connection had been reset.  this could have been due to the macbook thinking it was being attacked (lol)...
