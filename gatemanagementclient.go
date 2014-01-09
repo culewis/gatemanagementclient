@@ -4,21 +4,22 @@
  **********************************************************************************/
 package gatemanagementclient
 
-
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 )
+
 
 // a simple client type encapsulating the url of the etcd server
 type GateManagementClient struct {
 	GateManagerUrl string
 }
+
 
 /**
  * attempts to retrieve the value for the passed in "key" from the etcd server;
@@ -35,9 +36,9 @@ func (c *GateManagementClient) GetKey(key string) (interface{}, error) {
  * returns the message contents XOR a fatal error that occurred
  **/
 func (c *GateManagementClient) PostKey(key string, value string) (interface{}, error) {
-	response, err := http.PostForm(fmt.Sprintf("%s/%s", c.GateManagerUrl, key),
-								   url.Values{"value": {value}})
-	return c.ProcessResponse(response, err)
+	response, httpErr := http.PostForm(fmt.Sprintf("%s/%s", c.GateManagerUrl, key),
+									   url.Values{"value": {value}})
+	return c.ProcessResponse(response, httpErr)
 }
 
 
@@ -49,15 +50,15 @@ func (c *GateManagementClient) PostKey(key string, value string) (interface{}, e
  **/
 func (c *GateManagementClient) DeleteKey(key string) (interface{}, error) {
 	var client http.Client
-
 	request, err := http.NewRequest("DELETE", 
 					fmt.Sprintf("%s/%s", c.GateManagerUrl, key), nil)
+
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := client.Do(request)
-	return c.ProcessResponse(response, err)
+	response, httpErr := client.Do(request)
+	return c.ProcessResponse(response, httpErr)
 }
 
 
@@ -75,6 +76,7 @@ func (c *GateManagementClient) ProcessResponse(response *http.Response, err erro
 
 	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
+
 	if err != nil {
 		return nil, err
 	} else if body == nil || len(body) == 0 {
@@ -87,6 +89,7 @@ func (c *GateManagementClient) ProcessResponse(response *http.Response, err erro
 	case 404:
 		var m EtcdErrorMessage
 		err = json.Unmarshal(body, &m)
+
 		if err != nil {
 			return nil, err
 		}
@@ -97,6 +100,7 @@ func (c *GateManagementClient) ProcessResponse(response *http.Response, err erro
 	case 200:
 		var m EtcdActionMessage
 		err = json.Unmarshal(body, &m)
+
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +109,6 @@ func (c *GateManagementClient) ProcessResponse(response *http.Response, err erro
 		return m, nil
 
 	default:
-		return nil, errors.New(fmt.Sprintf("unhandled response encountered: %s", 
-										   response.Status))
+		return nil, fmt.Errorf("unhandled response encountered: %s", response.Status)
 	}
 }

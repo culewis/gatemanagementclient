@@ -4,6 +4,7 @@
  **********************************************************************************/
 package gatemanagementclient
 
+
 /***********************************************************************************
  * a simple type used to unmarshal JSON responses back from the etcd server giving
  * context to how the etcd server encountered a problem processing a request
@@ -14,6 +15,7 @@ type EtcdErrorMessage struct {
 	Cause string
 	Index int32
 }
+
 
 /***********************************************************************************
  * a simple type used to unmarshal JSON responses back from the etcd server giving
