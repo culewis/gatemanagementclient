@@ -84,66 +84,56 @@ func TestPutKey(t *testing.T) {
  * errors as a result of poor management of memory
  **/
  func TestClientIsHardened(t *testing.T) {
+	const THRESHOLDOFPAIN = 512   // looked like etcd started to crack at about 1024
+ 	var client = &GateManagementClient{GATEMANAGERURL}
+ 	sem := make(chan int, THRESHOLDOFPAIN)
+ 	runtime.GOMAXPROCS(32)  // cap concurrent threads to 32
 
- 	postKeys := func(i int, channel chan int) {
- 		t.Logf("PostKey foo%v=bar%v", i, i)
- 		var client = &GateManagementClient{GATEMANAGERURL}
- 		message, err := client.PostKey(fmt.Sprintf("foo%v", i), fmt.Sprintf("bar%v", i))
+ 	for i := 0; i < THRESHOLDOFPAIN; i++ {
+ 		go func(client *GateManagementClient, i int) {
+	 		t.Logf("PostKey foo%v=bar%v", i, i)
+	 		message, err := client.PostKey(fmt.Sprintf("foo%v", i), fmt.Sprintf("bar%v", i))
 
- 		if err != nil {
- 			t.Errorf("An unexpected error occurred: %s\n", err)
- 		} else if message == nil {
- 			t.Error("The message response for PostKey was unexpectedly nil")
- 		}
+	 		if err != nil {
+	 			t.Errorf("An unexpected error occurred: %s\n", err)
+	 		} else if message == nil {
+	 			t.Error("The message response for PostKey was unexpectedly nil")
+	 		}
 
- 		channel <- 1
+	 		sem <- 1
+	 	} (client, i)
  	}
+ 	for i := 0; i < THRESHOLDOFPAIN; i++ { <-sem }
 
- 	getKeys := func(i int, channel chan int) {
- 		t.Logf("GetKey foo%v=bar%v", i, i)
- 		var client = &GateManagementClient{GATEMANAGERURL}
- 		message, err := client.GetKey(fmt.Sprintf("foo%v", i))
+ 	for i := 0; i < THRESHOLDOFPAIN; i++ {
+ 		go func(client *GateManagementClient, i int) {
+	 		t.Logf("GetKey foo%v=bar%v", i, i)
+	 		message, err := client.GetKey(fmt.Sprintf("foo%v", i))
 
- 		if err != nil {
- 			t.Errorf("An unexpected error occurred: %s\n", err)
- 		} else if message == nil {
- 			t.Error("The message response for GetKey was unexpectedly nil")
- 		}
+	 		if err != nil {
+	 			t.Errorf("An unexpected error occurred: %s\n", err)
+	 		} else if message == nil {
+	 			t.Error("The message response for GetKey was unexpectedly nil")
+	 		}
 
- 		channel <- 1
+	 		sem <- 1
+	 	}(client, i)
  	}
+ 	for i := 0; i < THRESHOLDOFPAIN; i++ { <-sem }
 
- 	deleteKeys := func(i int, channel chan int) {
- 		t.Logf("DeleteKey foo%v=bar%v", i, i)
- 		var client = &GateManagementClient{GATEMANAGERURL}
- 		message, err := client.DeleteKey(fmt.Sprintf("foo%v", i))
+	for i := 0; i < THRESHOLDOFPAIN; i++ {
+ 		go func(client *GateManagementClient, i int) {
+	 		t.Logf("DeleteKey foo%v=bar%v", i, i)
+	 		message, err := client.DeleteKey(fmt.Sprintf("foo%v", i))
 
- 		if err != nil {
- 			t.Errorf("An unexpected error occurred: %s\n", err)
- 		} else if message == nil {
- 			t.Error("The message response for DeleteKey was unepxectedly nil")
- 		}
+	 		if err != nil {
+	 			t.Errorf("An unexpected error occurred: %s\n", err)
+	 		} else if message == nil {
+	 			t.Error("The message response for DeleteKey was unepxectedly nil")
+	 		}
 
- 		channel <- 1
+	 		sem <- 1
+	 	}(client, i)
  	}
-
-	const PAINTHRESHOLD = 1024
- 	channels := make(chan int, PAINTHRESHOLD)
- 	runtime.GOMAXPROCS(4)
-
- 	for i := 0; i < PAINTHRESHOLD; i++ {
- 		go postKeys(i, channels)
- 	}
-
- 	for i := 0; i < PAINTHRESHOLD; i++ {
- 		go getKeys(i, channels)
- 	}
-
- 	for i := 0; i < PAINTHRESHOLD; i++ {
- 		go deleteKeys(i, channels)
- 	}
-
- 	for i := 0; i < PAINTHRESHOLD; i++ {
- 		<- channels
- 	}
+ 	for i := 0; i < THRESHOLDOFPAIN; i++ { <-sem }
  }

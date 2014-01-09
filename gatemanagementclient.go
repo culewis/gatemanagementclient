@@ -50,8 +50,7 @@ func (c *GateManagementClient) PostKey(key string, value string) (interface{}, e
  **/
 func (c *GateManagementClient) DeleteKey(key string) (interface{}, error) {
 	var client http.Client
-	request, err := http.NewRequest("DELETE", 
-					fmt.Sprintf("%s/%s", c.GateManagerUrl, key), nil)
+	request, err := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", c.GateManagerUrl, key), nil)
 
 	if err != nil {
 		return nil, err
@@ -67,14 +66,20 @@ func (c *GateManagementClient) DeleteKey(key string) (interface{}, error) {
  * returns the message contents XOR a fatal error that occurred
  **/
 func (c *GateManagementClient) ProcessResponse(response *http.Response, err error) (interface{}, error) {
-	log.Printf("response Status: %s\n", response.Status)
+	if (response != nil) {
+		defer response.Body.Close()
+	}
 
-	if err != nil {
-		response.Body.Close()
+	if (err != nil) {
 		return nil, err
 	}
 
-	defer response.Body.Close()
+	log.Printf("response Status: %s\n", response.Status)
+
+	if err != nil {
+		return nil, err
+	}
+	
 	body, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
