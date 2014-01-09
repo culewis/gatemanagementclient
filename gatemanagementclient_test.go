@@ -8,12 +8,15 @@ package gatemanagementclient
 import "testing"
 
 
+var client = GateManagementClient{"http://Johns-Macbook-Air.local:4001/v1/keys"}
+
+
 /**
  * tests that retrieving a key that does not exist returns the expected 
  * errorCode: 100 and message: "Key not found"
  **/
 func TestGetKeyInvalidKey(t *testing.T) {
-	message, error := GetKey("whoopsie")
+	message, error := client.GetKey("whoopsie")
 	if error != nil {
 		t.Errorf("An unexpected error occurred: %s\n", error)
 	} else if message == nil {
@@ -36,7 +39,7 @@ func TestGetKeyInvalidKey(t *testing.T) {
  * encountering any errors
  **/
 func TestPutKey(t *testing.T) {
-	message, error := PostKey("foo", "bar")
+	message, error := client.PostKey("foo", "bar")
 	if error != nil {
 		t.Errorf("An unexpected error occurred: %s\n", error)
 	} else if message == nil {
@@ -50,7 +53,7 @@ func TestPutKey(t *testing.T) {
 		  	t.Errorf("PostKey EtcdActionMessage did not return the expected values.  " +
 		  				"EtcdActionMessage was %+v\n", etcdActionMessage)
 		} else {
-			message, error := DeleteKey("foo")
+			message, error := client.DeleteKey("foo")
 			if error != nil {
 				t.Errorf("An unexpected error occurred: %s\n", error)
 			} else if message == nil {

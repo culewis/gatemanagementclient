@@ -15,18 +15,18 @@ import (
 	"log"
 )
 
-
-// the location of the etcd server
-const gatemanagerurl string = "http://Johns-Macbook-Air.local:4001/v1/keys"
-
+// a simple client type encapsulating the url of the etcd server
+type GateManagementClient struct {
+	GateManagerUrl string
+}
 
 /**
  * attempts to retrieve the value for the passed in "key" from the etcd server;
  * this method returns the message contents XOR a fatal error that occurred
  **/
-func GetKey(key string) (interface{}, error) {
-	response, httpErr := http.Get(fmt.Sprintf("%s/%s", gatemanagerurl, key))
-	return ProcessResponse(response, httpErr)
+func (c *GateManagementClient) GetKey(key string) (interface{}, error) {
+	response, httpErr := http.Get(fmt.Sprintf("%s/%s", c.GateManagerUrl, key))
+	return c.ProcessResponse(response, httpErr)
 }
 
 
@@ -34,10 +34,10 @@ func GetKey(key string) (interface{}, error) {
  * attempts to create a key/value combination on the etcd server; this method
  * returns the message contents XOR a fatal error that occurred
  **/
-func PostKey(key string, value string) (interface{}, error) {
-	response, err := http.PostForm(fmt.Sprintf("%s/%s", gatemanagerurl, key),
+func (c *GateManagementClient) PostKey(key string, value string) (interface{}, error) {
+	response, err := http.PostForm(fmt.Sprintf("%s/%s", c.GateManagerUrl, key),
 								   url.Values{"value": {value}})
-	return ProcessResponse(response, err)
+	return c.ProcessResponse(response, err)
 }
 
 
@@ -47,16 +47,17 @@ func PostKey(key string, value string) (interface{}, error) {
  * on the http type (annoying) a client must be constructed and a new request 
  * must be created to explicitly make a DELETE http request
  **/
-func DeleteKey(key string) (interface{}, error) {
+func (c *GateManagementClient) DeleteKey(key string) (interface{}, error) {
 	var client http.Client
 
-	request, err := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", gatemanagerurl, key), nil)
+	request, err := http.NewRequest("DELETE", 
+					fmt.Sprintf("%s/%s", c.GateManagerUrl, key), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	response, err := client.Do(request)
-	return ProcessResponse(response, err)
+	return c.ProcessResponse(response, err)
 }
 
 
@@ -64,7 +65,7 @@ func DeleteKey(key string) (interface{}, error) {
  * a "helper" method used to process a response from the etcd server; this method
  * returns the message contents XOR a fatal error that occurred
  **/
-func ProcessResponse(response *http.Response, err error) (interface{}, error) {
+func (c *GateManagementClient) ProcessResponse(response *http.Response, err error) (interface{}, error) {
 	log.Printf("response Status: %s\n", response.Status)
 
 	if err != nil {
